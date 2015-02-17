@@ -31,3 +31,8 @@ search_test.go:82
 i := Search(n, func(i int) bool { count++; return i >= x })  
 search_test.go:155  
 i := Search(size, func(i int) bool { return i >= targ })  
+
+### TODOs:
+
+* Improve error messages  
+* Add support for non-expression identifiers (e.g. keys in struct initialization)
