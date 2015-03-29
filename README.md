@@ -15,22 +15,17 @@ The first line contains the path of the file relative to `root` followed by `:li
 The second line contains the (trimmed) source text line containing the reference.
 
 ### example output:  
-> go-find-references -file /usr/local/go/src/sort/search.go -offset 2254
+> go-find-references -file /usr/lib/go/src/pkg/sort/search.go -offset 2254
 
-search.go:59  
-func Search(n int, f func(int) bool) int {  
-search.go:84  
-return Search(len(a), func(i int) bool { return a[i] >= x })  
-search.go:93  
-return Search(len(a), func(i int) bool { return a[i] >= x })  
-search.go:102  
-return Search(len(a), func(i int) bool { return a[i] >= x })  
-search_test.go:53  
-i := Search(e.n, e.f)  
-search_test.go:82  
-i := Search(n, func(i int) bool { count++; return i >= x })  
-search_test.go:155  
-i := Search(size, func(i int) bool { return i >= targ })  
+/usr/share/go/src/pkg/sort/search.go:59:6
+func Search(n int, f func(int) bool) int {
+/usr/share/go/src/pkg/sort/search.go:84:9
+	return Search(len(a), func(i int) bool { return a[i] >= x })
+/usr/share/go/src/pkg/sort/search.go:93:9
+	return Search(len(a), func(i int) bool { return a[i] >= x })
+/usr/share/go/src/pkg/sort/search.go:102:9
+	return Search(len(a), func(i int) bool { return a[i] >= x })
+
 
 ### TODOs:
 
