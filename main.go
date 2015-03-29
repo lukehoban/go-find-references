@@ -5,16 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
+	"path"
+	"path/filepath"
 
-	"code.google.com/p/rog-go/exp/go/ast"
-	"code.google.com/p/rog-go/exp/go/token"
+	"github.com/redefiance/ident"
 )
 
 var (
 	byteOffset = flag.Int("offset", -1, "the byte offset of the identifier in the file")
 	filePath   = flag.String("file", "", "the file path containing the identifier")
 	searchRoot = flag.String("root", "", "the root directory in which to search for references")
+	showIdent  = flag.Bool("ident", false, "whether to show the name and position where the identifier is defined")
 )
 
 func main() {
@@ -25,39 +26,69 @@ func main() {
 		return
 	}
 
-	*filePath = normalizePath(*filePath, false)
 	if *searchRoot == "" {
-		*searchRoot = getRootPath(*filePath)
-	} else {
-		*searchRoot = normalizePath(*searchRoot, true)
+		*searchRoot = path.Dir(*filePath)
 	}
 
-	var asts []*ast.File
-	asts = append(asts, parseAST(*filePath))
-	for path := range getFilesRecursive(*searchRoot) {
-		if path != *filePath {
-			asts = append(asts, parseAST(path))
+	var err error
+	*filePath, err = filepath.EvalSymlinks(*filePath)
+	if err != nil {
+		reportError(err)
+		return
+	}
+	*searchRoot, err = filepath.EvalSymlinks(*searchRoot)
+	if err != nil {
+		reportError(err)
+		return
+	}
+
+	def, err := ident.Lookup(*filePath, *byteOffset)
+	if err != nil {
+		reportError(err)
+		return
+	}
+
+	if *showIdent {
+		fmt.Println(def.Name, def.Position)
+	}
+
+	refs, errs := def.FindReferences(*searchRoot, true)
+	for {
+		select {
+		case ref, ok := <-refs:
+			if !ok {
+				return
+			}
+			reportReference(ref)
+		case err, ok := <-errs:
+			if !ok {
+				return
+			}
+			reportError(err)
 		}
-	}
-
-	ident, declPos := findDecl(asts[0], *byteOffset)
-
-	for _, ast := range asts {
-		display(findReferences(ast, declPos, ident))
 	}
 }
 
-func display(c chan token.Position) {
-	for p := range c {
-		f, err := os.Open(p.Filename)
-		if err != nil {
-			panic(err)
-		}
-		f.Seek(int64(p.Offset-p.Column+1), 0)
-		line, err := bufio.NewReader(f).ReadString('\n')
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("%s:%d\n%s\n", strings.TrimPrefix(p.Filename, *searchRoot), p.Line, strings.TrimSpace(line))
+func reportError(err error) {
+	fmt.Fprintln(os.Stderr, "error:", err)
+}
+
+func reportReference(ref ident.Reference) {
+	f, err := os.Open(ref.Position.Filename)
+	if err != nil {
+		reportError(err)
 	}
+
+	_, err = f.Seek(int64(ref.Position.Offset-ref.Position.Column+1), 0)
+	if err != nil {
+		reportError(err)
+	}
+
+	line, err := bufio.NewReader(f).ReadString('\n')
+	if err != nil {
+		reportError(err)
+	}
+
+	fmt.Println(ref.Position)
+	fmt.Println(line[:len(line)-1])
 }
