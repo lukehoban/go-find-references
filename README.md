@@ -26,7 +26,6 @@ func Search(n int, f func(int) bool) int {
 /usr/share/go/src/pkg/sort/search.go:102:9
 	return Search(len(a), func(i int) bool { return a[i] >= x })
 
-
 ### TODOs:
 
 * Improve error messages  

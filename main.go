@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/redefiance/ident"
 )
@@ -28,18 +27,6 @@ func main() {
 
 	if *searchRoot == "" {
 		*searchRoot = path.Dir(*filePath)
-	}
-
-	var err error
-	*filePath, err = filepath.EvalSymlinks(*filePath)
-	if err != nil {
-		reportError(err)
-		return
-	}
-	*searchRoot, err = filepath.EvalSymlinks(*searchRoot)
-	if err != nil {
-		reportError(err)
-		return
 	}
 
 	def, err := ident.Lookup(*filePath, *byteOffset)
